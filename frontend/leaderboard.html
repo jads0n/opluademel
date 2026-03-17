@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ranking - O Mapa da Lua de Mel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b132b;
+            --panel-bg: rgba(28, 37, 65, 0.7);
+            --gold: #FFD700;
+            --gold-dark: #D4AF37;
+            --danger: #ff4d4d;
+            --safe: #2ecc71;
+            --text-main: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at top, #1c2541 0%, var(--bg-color) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            opacity: 0.05;
+            background-image: radial-gradient(var(--gold) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+        }
+
+        header {
+            width: 100%;
+            padding: 18px 18px 14px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            font-size: 1.6rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .top-actions {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 8px 18px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .link-like {
+            appearance: none;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.88);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 900;
+            padding: 8px 6px;
+        }
+
+        .refresh-badge {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .refresh-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--safe);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.8); }
+        }
+
+        .rankings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            padding: 16px 18px 12px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 720px) {
+            .rankings-grid { grid-template-columns: 1fr; }
+        }
+
+        .rank-column {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.18);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 0 20px rgba(255, 215, 0, 0.03);
+        }
+
+        .col-header {
+            padding: 14px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .col-icon { font-size: 1.6rem; }
+
+        .col-title { flex: 1; }
+
+        .col-title h2 { font-size: 1.05rem; font-weight: 900; }
+
+        .col-title p { font-size: 0.78rem; opacity: 0.75; margin-top: 2px; }
+
+        .col-count {
+            font-size: 0.85rem;
+            font-weight: 900;
+            background: rgba(255,215,0,0.18);
+            padding: 4px 10px;
+            border-radius: 999px;
+            color: var(--gold);
+        }
+
+        .rank-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .rank-row:last-child { border-bottom: none; }
+
+        .rank-row.top-1 { background: linear-gradient(90deg, rgba(255,215,0,0.20), transparent); }
+        .rank-row.top-2 { background: linear-gradient(90deg, rgba(255,215,0,0.12), transparent); }
+        .rank-row.top-3 { background: linear-gradient(90deg, rgba(255,215,0,0.08), transparent); }
+
+        .rank-num {
+            font-size: 0.85rem;
+            font-weight: 900;
+            min-width: 26px;
+            text-align: center;
+            color: rgba(255,255,255,0.75);
+        }
+
+        .rank-emoji {
+            font-size: 1.15rem;
+            min-width: 26px;
+            text-align: center;
+        }
+
+        .rank-name {
+            flex: 1;
+            font-size: 0.95rem;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .rank-score {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+
+        .rank-row.empty .rank-name { opacity: 0.35; font-weight: 700; font-style: italic; }
+        .rank-row.empty .rank-score { opacity: 0.35; font-size: 0.9rem; }
+
+        .footer-bar {
+            text-align: center;
+            padding: 10px 18px 18px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.78);
+            max-width: 980px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+
+<header>
+    <h1>🏆 Ranking da Viagem</h1>
+</header>
+
+<div class="top-actions">
+    <button class="link-like" onclick="window.location.href='index.html'">← Voltar ao jogo</button>
+    <div class="refresh-badge">
+        <div class="refresh-dot"></div>
+        Ao vivo · atualiza em <span id="countdown">10</span>s
+    </div>
+    <div style="width: 110px;"></div>
+</div>
+
+<div class="rankings-grid">
+    <!-- Women (left) -->
+    <div class="rank-column" id="col-women">
+        <div class="col-header women">
+            <div class="col-icon">👩</div>
+            <div class="col-title">
+                <h2>Mulheres</h2>
+                <p>Ranking feminino</p>
+            </div>
+            <div class="col-count" id="count-women">0</div>
+        </div>
+        <div id="list-women">
+            <!-- Rows injected by JS -->
+        </div>
+    </div>
+
+    <!-- Men (right) -->
+    <div class="rank-column" id="col-men">
+        <div class="col-header men">
+            <div class="col-icon">👨</div>
+            <div class="col-title">
+                <h2>Homens</h2>
+                <p>Ranking masculino</p>
+            </div>
+            <div class="col-count" id="count-men">0</div>
+        </div>
+        <div id="list-men">
+            <!-- Rows injected by JS -->
+        </div>
+    </div>
+</div>
+
+<div class="footer-bar" id="last-updated">Carregando ranking...</div>
+
+<script>
+const API_URL = '';
+const MIN_ROWS = 10;
+const medals = ['🥇', '🥈', '🥉'];
+
+let countdown = 10;
+
+function renderList(containerId, players) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+
+    // Fill to at least MIN_ROWS
+    const rows = players.slice(0, MIN_ROWS);
+    while (rows.length < MIN_ROWS) rows.push(null);
+
+    rows.forEach((p, i) => {
+        const row = document.createElement('div');
+        const topClass = i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : '';
+
+        if (p) {
+            row.className = `rank-row ${topClass}`;
+            const rankEl = i < 3
+                ? `<div class="rank-emoji">${medals[i]}</div>`
+                : `<div class="rank-num">${i + 1}</div>`;
+            row.innerHTML = `
+                ${rankEl}
+                <div class="rank-name">${p.player_name}</div>
+                <div class="rank-score">€ ${p.current_score.toLocaleString('pt-BR')}</div>
+            `;
+        } else {
+            row.className = 'rank-row empty';
+            const rankEl = i < 3
+                ? `<div class="rank-emoji">${medals[i]}</div>`
+                : `<div class="rank-num">${i + 1}</div>`;
+            row.innerHTML = `
+                ${rankEl}
+                <div class="rank-name">—</div>
+                <div class="rank-score">€ 0</div>
+            `;
+        }
+        el.appendChild(row);
+    });
+}
+
+async function fetchLeaderboard() {
+    try {
+        const res = await fetch(`${API_URL}/leaderboard`);
+        const data = await res.json();
+
+        const men = data.leaderboard_men || [];
+        const women = data.leaderboard_women || [];
+
+        renderList('list-women', women);
+        renderList('list-men', men);
+
+        document.getElementById('count-women').textContent = women.length;
+        document.getElementById('count-men').textContent = men.length;
+
+        const now = new Date().toLocaleTimeString('pt-BR');
+        document.getElementById('last-updated').textContent = `Última atualização: ${now}`;
+    } catch (err) {
+        console.error('Erro ao buscar ranking:', err);
+    }
+}
+
+// Auto-refresh with countdown
+function startCountdown() {
+    countdown = 10;
+    const tick = setInterval(() => {
+        countdown--;
+        const el = document.getElementById('countdown');
+        if (el) el.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(tick);
+            fetchLeaderboard().then(() => startCountdown());
+        }
+    }, 1000);
+}
+
+fetchLeaderboard().then(() => startCountdown());
+</script>
+</body>
+</html>

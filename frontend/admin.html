@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Lua de Mel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-color: #0b132b;
+            --panel-bg: rgba(28, 37, 65, 0.7);
+            --gold: #FFD700;
+            --gold-dark: #D4AF37;
+            --danger: #ff4d4d;
+            --safe: #2ecc71;
+            --text-main: #ffffff;
+            --text-muted: rgba(255,255,255,0.72);
+            --border: rgba(255,215,0,0.18);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at top, #1c2541 0%, var(--bg-color) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            opacity: 0.05;
+            background-image: radial-gradient(var(--gold) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+        }
+
+        /* Header */
+        .page-header {
+            background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .page-header p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn-doacoes {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1.5px solid rgba(255,215,0,0.22);
+            background: rgba(0,0,0,0.20);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.92);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .btn-doacoes:hover { background: rgba(255,255,255,0.06); }
+
+        /* Main content */
+        .content {
+            padding: 16px;
+            max-width: 540px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 0 20px rgba(255, 215, 0, 0.02);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.92);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .card-title .icon {
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        /* Inputs */
+        .input-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid rgba(255,255,255,0.18);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.25);
+            padding: 12px 14px;
+            gap: 8px;
+            transition: border-color 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .input-group:focus-within { border-color: rgba(255,215,0,0.75); }
+
+        .input-prefix {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            color: rgba(255,255,255,0.92);
+            background: transparent;
+        }
+
+        .select-group {
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .select-group:focus-within { border-color: rgba(255,215,0,0.75); }
+
+        .select-group select {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            color: rgba(255,255,255,0.92);
+            background: transparent;
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #D4AF37 0%, #FFDF00 50%, #D4AF37 100%);
+            background-size: 200% auto;
+            animation: shine 3s infinite linear;
+            color: #0b132b;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover { filter: brightness(1.02); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* Generated code result card */
+        #result-box {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1.5px solid rgba(255, 215, 0, 0.25);
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+
+        .code-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .big-code {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 10px;
+            color: var(--gold);
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+
+        .btn-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1.5px solid rgba(255,215,0,0.22);
+            background: rgba(0,0,0,0.20);
+            color: rgba(255,255,255,0.92);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover { background: rgba(255,255,255,0.06); }
+
+        .copy-hint {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        /* Total Arrecadado */
+        .total-card { background: var(--panel-bg); }
+
+        .total-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .total-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .total-icon-wrap {
+            background: rgba(255, 215, 0, 0.12);
+            border-radius: 10px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .total-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+
+        .total-value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .total-count {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Tickets List */
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .list-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .btn-clear {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover { filter: brightness(0.95); }
+
+        .ticket-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ticket-item:last-child { border-bottom: none; }
+
+        .ticket-code {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.95);
+            letter-spacing: 2px;
+        }
+
+        .ticket-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .ticket-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .badge-used { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.72); }
+
+        .badge-pending { background: rgba(255,215,0,0.18); color: var(--gold); }
+
+        .badge-busted { background: rgba(255,77,77,0.15); color: var(--danger); }
+
+        .badge-cashed { background: rgba(46,204,113,0.14); color: var(--safe); }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .btn-icon:hover { color: var(--danger); }
+
+        .msg {
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-height: 20px;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .msg.success { color: var(--safe); }
+        .msg.error { color: var(--danger); }
+
+        .empty-list {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Modal overlay for clear */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            padding: 24px 20px 36px;
+            width: 100%;
+            max-width: 540px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal h3 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--danger);
+        }
+
+        .modal p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .modal input {
+            width: 100%;
+            border: 1.5px solid rgba(255,255,255,0.18);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            outline: none;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+            background: rgba(0,0,0,0.25);
+            color: rgba(255,255,255,0.92);
+        }
+
+        .modal input:focus { border-color: var(--danger); }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 13px;
+            border: 1.5px solid rgba(255,215,0,0.22);
+            background: rgba(0,0,0,0.20);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            color: rgba(255,255,255,0.92);
+        }
+
+        .btn-confirm-clear {
+            flex: 1;
+            padding: 13px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+        }
+
+        /* Doações View */
+        #donations-view {
+            display: none;
+        }
+
+        #donations-view.active {
+            display: block;
+        }
+
+        #main-view.hidden {
+            display: none;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.88);
+            cursor: pointer;
+            padding: 4px 0;
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 14px;
+            text-decoration: underline;
+        }
+
+        .donation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .donation-item:last-child { border-bottom: none; }
+
+        .donor-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .donor-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .donor-amount {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .donor-score {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: right;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+
+<!-- ==================== MAIN VIEW ==================== -->
+<div id="main-view">
+    <header class="page-header">
+        <div>
+            <h1>Painel Admin</h1>
+            <p>Gerar tickets para os convidados</p>
+        </div>
+        <button class="btn-doacoes" id="btn-goto-doacoes">
+            <span>👥</span> Doações
+        </button>
+    </header>
+
+    <div class="content">
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">🔒</span> Acesso do Admin
+            </div>
+            <label class="input-label">Senha do admin</label>
+            <div class="input-group">
+                <span class="input-prefix">🔑</span>
+                <input type="password" id="admin-password" placeholder="Digite a senha para operar">
+            </div>
+            <p style="font-size:0.8rem;color:rgba(255,255,255,0.72);line-height:1.4;">
+                A senha fica salva apenas neste navegador (local).
+            </p>
+        </div>
+
+        <!-- Gerar Ticket Card -->
+        <div class="card">
+            <div class="card-title">
+                <span class="icon">💸</span> Gerar Novo Ticket
+            </div>
+
+            <label class="input-label">Valor Doado (R$)</label>
+            <div class="input-group">
+                <span class="input-prefix">$</span>
+                <input type="number" id="donation-amount" placeholder="50" min="10" step="10">
+            </div>
+
+            <button class="btn-primary" id="btn-generate">Gerar Código</button>
+            <p class="msg" id="generate-msg"></p>
+        </div>
+
+        <!-- Result Card (shown after generation) -->
+        <div id="result-box" style="display:none;">
+            <p class="code-label">Código gerado (<span id="generated-mult"></span>x)</p>
+            <div class="big-code" id="generated-code">------</div>
+            <button class="btn-copy" onclick="copyCode()">
+                📋 Copiar Código
+            </button>
+            <p class="copy-hint" id="copy-feedback"></p>
+        </div>
+
+        <!-- Total Arrecadado -->
+        <div class="card total-card">
+            <div class="total-inner">
+                <div class="total-left">
+                    <div class="total-icon-wrap">📈</div>
+                    <div>
+                        <p class="total-label">Total Arrecadado</p>
+                        <p class="total-value" id="total-raised">R$ 0,00</p>
+                    </div>
+                </div>
+                <p class="total-count" id="total-count">0 tickets</p>
+            </div>
+        </div>
+
+        <!-- Tickets Gerados -->
+        <div class="card">
+            <div class="list-header">
+                <p class="list-title" id="list-title">Tickets Gerados (0)</p>
+                <button class="btn-clear" id="btn-open-clear">
+                    <span>↺</span> Limpar Tudo
+                </button>
+            </div>
+            <div id="tickets-list">
+                <div class="empty-list">Nenhum ticket gerado ainda.</div>
+            </div>
+        </div>
+
+        <div style="height:30px;"></div>
+    </div>
+</div>
+
+<!-- ==================== DOAÇÕES VIEW ==================== -->
+<div id="donations-view">
+    <header class="page-header">
+        <div>
+            <h1>Doações</h1>
+            <p>Lista de convidados que doaram</p>
+        </div>
+    </header>
+
+    <div class="content">
+        <button class="back-btn" id="btn-back">
+            ← Voltar ao Painel
+        </button>
+
+        <!-- Total -->
+        <div class="card total-card">
+            <div class="total-inner">
+                <div class="total-left">
+                    <div class="total-icon-wrap">💰</div>
+                    <div>
+                        <p class="total-label">Total Arrecadado</p>
+                        <p class="total-value" id="donations-total">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donations list -->
+        <div class="card">
+            <div class="card-title">👥 Convidados</div>
+            <div id="donations-list">
+                <div class="empty-list">Carregando...</div>
+            </div>
+        </div>
+
+        <div style="height:30px;"></div>
+    </div>
+</div>
+
+<!-- ==================== CLEAR MODAL ==================== -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <h3>⚠️ Limpar Tudo?</h3>
+        <p>Esta ação deletará todos os tickets e jogos permanentemente. Digite a senha para confirmar.</p>
+        <input type="password" id="clear-password-input" placeholder="Senha de confirmação">
+        <p class="msg error" id="clear-msg"></p>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="btn-cancel-clear">Cancelar</button>
+            <button class="btn-confirm-clear" id="btn-confirm-clear">Limpar Tudo</button>
+        </div>
+    </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

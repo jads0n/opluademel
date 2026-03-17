@@ -1,0 +1,381 @@
+/* Reset & Variáveis */
+:root {
+    --italy-green: #2563eb;
+    --italy-white: #f4f5f0;
+    --italy-red: #cd212a;
+    --dark-green: #005a2b;
+    --gold: #d4af37;
+    --bg-dark: #1a1a1a;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    font-family: 'Montserrat', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-dark), #2a2a2a);
+    color: var(--italy-white);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+/* Telas / Views */
+.screen {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.view-hidden {
+    display: none;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.view-active {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    transform: scale(1);
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    text-align: center;
+}
+
+/* Tipografia */
+.title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: var(--italy-white);
+}
+
+.title span {
+    color: #fbbf24;
+    font-style: italic;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: #ccc;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+
+/* Formulários & Inputs */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+input:focus {
+    border-color: #3b82f6;
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 10px rgba(0, 140, 69, 0.3);
+}
+
+/* Botões */
+.btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn.primary {
+    background: linear-gradient(45deg, #3b82f6, var(--dark-green));
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 140, 69, 0.4);
+}
+
+.btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 140, 69, 0.6);
+}
+
+.btn.secondary {
+    background: linear-gradient(45deg, #ef4444, #9e1b21);
+    color: white;
+    box-shadow: 0 4px 15px rgba(205, 33, 42, 0.4);
+    margin-top: 20px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Erros/Mensagens */
+.error-msg {
+    color: #ff4d4d;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    min-height: 20px;
+}
+
+.game-msg {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    min-height: 50px;
+}
+
+/* Tela do Jogo - Header */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    margin-bottom: 20px;
+    border-radius: 15px;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#display-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.multiplier-badge {
+    background: #fbbf24;
+    color: var(--bg-dark);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.score-label {
+    font-size: 0.8rem;
+    color: #ccc;
+    text-transform: uppercase;
+}
+
+.score-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: #fbbf24;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.score-value.pop {
+    animation: popScore 0.3s ease;
+}
+
+/* O Tabuleiro (Grid) */
+.game-board-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.mines-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    gap: 4px;
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 1 / 1;
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 15px;
+    border: 1px solid var(--glass-border);
+}
+
+/* Células do jogo */
+.cell {
+    background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.5);
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem; /* Tamanho do emoji */
+}
+
+.cell:hover:not(.revealed) {
+    background: #4a4a4a;
+    transform: scale(1.05);
+}
+
+.cell.revealed {
+    cursor: default;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    transform: scale(0.95);
+    animation: flipIn 0.4s ease forwards;
+}
+
+.cell.safe {
+    background: linear-gradient(135deg, #3b82f6, #004d25);
+}
+
+.cell.bomb {
+    background: linear-gradient(135deg, #ef4444, #8a151b);
+    animation: shake 0.5s ease;
+}
+
+/* Revelação Final */
+.cell.safe-reveal {
+    background: rgba(0, 140, 69, 0.3);
+}
+
+.cell.bomb-reveal {
+    background: rgba(205, 33, 42, 0.4);
+}
+
+/* Leaderboard */
+.leaderboard-card {
+    padding: 30px 20px;
+}
+
+.table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 20px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.2);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+th {
+    background: rgba(255,255,255,0.05);
+    color: var(--italy-white);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+}
+
+td {
+    color: #eee;
+}
+
+.score-col {
+    color: #fbbf24;
+    font-weight: bold;
+    text-align: right;
+}
+
+.mt-20 { margin-top: 20px; }
+.text-center { text-align: center; }
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popScore {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); color: #fff; }
+    100% { transform: scale(1); }
+}
+
+@keyframes flipIn {
+    0% { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+    100% { transform: perspective(400px) rotateY(0deg); opacity: 1; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(205, 33, 42, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(205, 33, 42, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(205, 33, 42, 0); }
+}
+
+/* Responsividade ajustada para celulares pequenos */
+@media (max-width: 380px) {
+    .mines-grid {
+        gap: 2px;
+        padding: 4px;
+    }
+    
+    .cell {
+        font-size: 1rem;
+        border-radius: 2px;
+    }
+    
+    .glass-card {
+        padding: 30px 15px;
+    }
+    
+    .title {
+        font-size: 1.8rem;
+    }
+}

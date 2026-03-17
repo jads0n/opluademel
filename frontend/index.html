@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>O Mapa da Lua de Mel</title>
+    <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b132b;
+            --panel-bg: rgba(28, 37, 65, 0.7);
+            --gold: #FFD700;
+            --gold-dark: #D4AF37;
+            --danger: #ff4d4d;
+            --safe: #2ecc71;
+            --text-main: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at top, #1c2541 0%, var(--bg-color) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding-bottom: 88px; /* espaço pro botão sticky */
+        }
+
+        .bg-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.05;
+            background-image: radial-gradient(var(--gold) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .score-board {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 20px;
+            padding: 20px 40px;
+            margin: 20px 0 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255, 215, 0, 0.05);
+            transition: transform 0.3s ease;
+            width: calc(100% - 40px);
+            max-width: 420px;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .score-value {
+            font-size: 3.0rem;
+            font-weight: 900;
+            color: var(--gold);
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .multiplier-badge {
+            background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+            color: #000;
+            font-size: 1rem;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-weight: 900;
+            vertical-align: middle;
+        }
+
+        .sub-actions {
+            width: calc(100% - 40px);
+            max-width: 420px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .link-like {
+            appearance: none;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.85);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 6px 4px;
+        }
+
+        .hint {
+            opacity: 0.85;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            text-align: right;
+            flex: 1;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 420px;
+            perspective: 1000px;
+        }
+
+        .tile {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        .tile::before {
+            content: '❓';
+            font-size: 1.2rem;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .tile:active { transform: scale(0.92); }
+
+        .tile.revealed {
+            cursor: default;
+            transform: rotateY(180deg);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tile.revealed::before { display: none; }
+
+        .tile-content {
+            transform: rotateY(180deg);
+            display: none;
+            position: absolute;
+            inset: 0;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            font-size: 2rem;
+        }
+
+        .tile.revealed .tile-content { display: flex; }
+
+        .tile.safe .tile-content {
+            background: radial-gradient(circle, rgba(46, 204, 113, 0.4) 0%, transparent 80%);
+            text-shadow: 0 0 15px var(--safe);
+        }
+
+        .tile.bomb .tile-content {
+            background: radial-gradient(circle, rgba(255, 77, 77, 0.4) 0%, transparent 80%);
+            text-shadow: 0 0 15px var(--danger);
+        }
+
+        .tile.fatal-bomb .tile-content {
+            background: var(--danger);
+            animation: pulse-danger 1s infinite alternate;
+        }
+
+        .tile.revealed-bomb .tile-content {
+            background: radial-gradient(circle, rgba(255, 77, 77, 0.2) 0%, transparent 80%);
+            opacity: 0.7;
+        }
+
+        .tile.missed-safe .tile-content {
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 80%);
+            opacity: 0.4;
+            filter: grayscale(100%);
+        }
+
+        @keyframes pulse-danger {
+            from { box-shadow: 0 0 10px var(--danger); }
+            to { box-shadow: 0 0 30px var(--danger); transform: scale(1.06); }
+        }
+
+        .controls {
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+            max-width: 420px;
+            padding: 12px 20px 18px;
+            margin-top: auto;
+            background: linear-gradient(180deg, transparent 0%, rgba(11, 19, 43, 0.85) 40%, rgba(11, 19, 43, 0.95) 100%);
+            backdrop-filter: blur(6px);
+        }
+
+        .btn-cashout {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(90deg, #D4AF37 0%, #FFDF00 50%, #D4AF37 100%);
+            background-size: 200% auto;
+            color: #0b132b;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: shine 3s infinite linear;
+        }
+
+        .btn-cashout:disabled {
+            background: #333;
+            color: #666;
+            box-shadow: none;
+            cursor: not-allowed;
+            animation: none;
+        }
+
+        .btn-cashout:not(:disabled):active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.4);
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            padding: 18px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--gold);
+            padding: 26px;
+            border-radius: 20px;
+            text-align: center;
+            transform: translateY(50px);
+            transition: transform 0.3s;
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+
+        .modal-box h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            margin-bottom: 12px;
+            font-size: 1.9rem;
+        }
+
+        .modal-box p {
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.92);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin: 14px 0 10px;
+            text-align: left;
+        }
+
+        .field-label {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            margin-bottom: 6px;
+            display: block;
+            letter-spacing: 0.4px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(0,0,0,0.25);
+            color: white;
+            outline: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+        }
+
+        .input::placeholder { color: rgba(255,255,255,0.55); }
+
+        .gender-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .gender-btn {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(0,0,0,0.25);
+            color: rgba(255,255,255,0.9);
+            font-weight: 900;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .gender-btn:active { transform: scale(0.98); }
+
+        .gender-btn.active {
+            border-color: rgba(255, 215, 0, 0.8);
+            background: rgba(255, 215, 0, 0.18);
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn-reload {
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            padding: 12px 16px;
+            border-radius: 30px;
+            font-weight: 900;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reload:hover { background: var(--gold); color: var(--bg-color); }
+
+        .btn-primary {
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            font-weight: 900;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(90deg, #D4AF37 0%, #FFDF00 50%, #D4AF37 100%);
+            background-size: 200% auto;
+            animation: shine 3s infinite linear;
+            color: #0b132b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary:disabled {
+            background: #333;
+            color: #666;
+            animation: none;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            min-height: 20px;
+            color: var(--danger);
+            font-weight: 800;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            10% { transform: translate(-2px, -4px) rotate(-2deg); }
+            20% { transform: translate(-6px, 0px) rotate(2deg); }
+            30% { transform: translate(6px, 4px) rotate(0deg); }
+            40% { transform: translate(2px, -2px) rotate(2deg); }
+            50% { transform: translate(-2px, 4px) rotate(-2deg); }
+            60% { transform: translate(-6px, 2px) rotate(0deg); }
+            70% { transform: translate(6px, 2px) rotate(-2deg); }
+            80% { transform: translate(-2px, -2px) rotate(2deg); }
+            90% { transform: translate(2px, 4px) rotate(0deg); }
+            100% { transform: translate(2px, -4px) rotate(-2deg); }
+        }
+
+        .shake { animation: shake 0.8s; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-pattern"></div>
+
+    <header>
+        <h1>Rumo à Itália 🇮🇹</h1>
+        <div class="subtitle">O Mapa da Lua de Mel</div>
+    </header>
+
+    <div class="score-board" id="scoreBoard">
+        <div class="score-label">Lucro Atual</div>
+        <div class="score-value">
+            <span id="scoreDisplay">0</span>
+            <span class="multiplier-badge" id="multiplierDisplay">1x</span>
+        </div>
+    </div>
+
+    <div class="sub-actions">
+        <button class="link-like" id="btnOpenStart">Comprar/Usar código</button>
+        <div class="hint" id="playerHint">Pronto para jogar</div>
+        <button class="link-like" onclick="openLeaderboard()">Ranking 🏆</button>
+    </div>
+
+    <div class="grid-container" id="grid"></div>
+
+    <div class="controls">
+        <button class="btn-cashout" id="btnCashout" disabled>Fazer as Malas!</button>
+    </div>
+
+    <!-- Modal: iniciar jogo (nome/gênero/código) -->
+    <div class="modal-overlay" id="startModal">
+        <div class="modal-box">
+            <h2>Embarque ✈️</h2>
+            <p>Informe seu nome, categoria e o código do ticket para começar.</p>
+
+            <div class="form-grid">
+                <div>
+                    <label class="field-label">Seu nome</label>
+                    <input class="input" type="text" id="playerName" placeholder="Como te chamam na festa?">
+                </div>
+
+                <div>
+                    <label class="field-label">Categoria</label>
+                    <div class="gender-row">
+                        <button class="gender-btn" id="genderHomem" type="button">👨 Homem</button>
+                        <button class="gender-btn" id="genderMulher" type="button">👩 Mulher</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">Código do ticket</label>
+                    <input class="input" type="text" id="ticketCode" placeholder="EX: ABC123" maxlength="6" style="text-transform:uppercase; letter-spacing:3px; font-weight:900; text-align:center;">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-primary" id="btnStart">Embarcar</button>
+                <button class="btn-reload" id="btnCloseStart" type="button">Fechar</button>
+            </div>
+
+            <div class="error-msg" id="startError"></div>
+        </div>
+    </div>
+
+    <!-- Modal: resultado (win/lose/cashout) -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-box">
+            <h2 id="modalTitle">Sucesso!</h2>
+            <p id="modalMessage">Você garantiu seus pontos.</p>
+            <div class="modal-actions">
+                <button class="btn-primary" id="btnPlayAgain">Jogar de novo</button>
+                <button class="btn-reload" id="btnGoRanking">Ver ranking</button>
+            </div>
+        </div>
+    </div>
+
+
+<script src="app.js"></script>
+</body>
+</html>
