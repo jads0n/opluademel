@@ -3,7 +3,8 @@ import random
 import string
 import json
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Header, Body, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -65,13 +66,20 @@ async def global_exception_handler(request, exc):
     )
 
 # Constants (tabuleiro)
-# Atualizado para 5x5 (25 casas) com 5 bombas, para bater com o novo frontend.
+# 5x5 (25 casas) com 5 bombas, para bater com o novo frontend.
 GRID_SIZE = 5
 TOTAL_CELLS = GRID_SIZE * GRID_SIZE
 TOTAL_BOMBS = 5
+
+# Código especial de teste (não grava em Supabase / ranking)
+TEST_MODE_CODE = os.getenv("TEST_MODE_CODE", "TESTE0")
+
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "podelimparmesmo")
 if ADMIN_PASSWORD == "podelimparmesmo":
     print("Warning: ADMIN_PASSWORD not set; using insecure default.")
+
+# Jogos em memória para modo teste (game_id iniciado com "test_")
+_test_games: Dict[str, dict] = {}
 
 # Pydantic Models
 class GenerateTicketRequest(BaseModel):
@@ -200,6 +208,21 @@ async def clear_database(password: str = Header(None)):
 
 @app.post("/game/start", response_model=StartGameResponse)
 async def start_game(request: StartGameRequest):
+    # Modo teste: código especial (não grava no banco nem entra no ranking)
+    if request.code.upper() == TEST_MODE_CODE.upper():
+        test_game_id = f"test_{uuid4()}"
+        grid = generate_grid()
+        # Para o modo teste usamos um multiplicador fixo só para feeling do jogo
+        test_multiplier = 2.0
+        _test_games[test_game_id] = {
+            "player_name": request.player_name,
+            "grid_state": grid,
+            "current_score": 0,
+            "status": "active",
+            "multiplier": test_multiplier,
+        }
+        return StartGameResponse(game_id=test_game_id, multiplier=test_multiplier)
+
     supabase = get_supabase()
     
     # Verify ticket
@@ -240,6 +263,32 @@ async def start_game(request: StartGameRequest):
 
 @app.post("/game/click", response_model=ClickResponse)
 async def click_cell(request: ClickRequest):
+    # Modo teste (game_id começa com "test_"): tudo em memória, sem Supabase
+    if request.game_id.startswith("test_"):
+        game = _test_games.get(request.game_id)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found.")
+        if game["status"] != "active":
+            raise HTTPException(status_code=400, detail="Game is no longer active.")
+
+        grid = game["grid_state"]
+        row, col = request.row, request.col
+
+        if row < 0 or row >= GRID_SIZE or col < 0 or col >= GRID_SIZE:
+            raise HTTPException(status_code=400, detail="Invalid coordinates.")
+
+        cell_value = grid[row][col]
+        multiplier = game["multiplier"]
+
+        if cell_value == "bomb":
+            game["status"] = "busted"
+            game["current_score"] = 0
+            return ClickResponse(result="bomb", current_score=0, grid=grid)
+        else:
+            new_score = game["current_score"] + int(100 * multiplier)
+            game["current_score"] = new_score
+            return ClickResponse(result="safe", current_score=new_score)
+
     supabase = get_supabase()
     
     # 1. Fetch game and ticket
@@ -278,6 +327,17 @@ async def click_cell(request: ClickRequest):
 
 @app.post("/game/cashout", response_model=CashoutResponse)
 async def cashout(request: CashoutRequest):
+    # Modo teste (game_id começa com "test_"): só encerra o jogo em memória
+    if request.game_id.startswith("test_"):
+        game = _test_games.get(request.game_id)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found.")
+        if game["status"] != "active":
+            raise HTTPException(status_code=400, detail="Game cannot be cashed out.")
+
+        game["status"] = "cashed_out"
+        return CashoutResponse(final_score=game["current_score"])
+
     supabase = get_supabase()
     
     game_res = supabase.table("games").select("*").eq("id", request.game_id).execute()
